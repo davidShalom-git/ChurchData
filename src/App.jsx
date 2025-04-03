@@ -15,7 +15,7 @@ function App() {
     setMessage(null)
 
     try {
-      const response = await fetch('http://localhost:2000/upload/data/video', {
+      const response = await fetch('https://church-data.vercel.app/upload/data/video', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)

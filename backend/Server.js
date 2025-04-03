@@ -9,7 +9,26 @@ require('dotenv').config();
 
 
 app.use(bodyParser.json());
-app.use(cors());
+const allowedOrigins = [
+    'https://church-data-56lv.vercel.app',
+    'https://church-rosy-rho.vercel.app'
+];
+
+// CORS configuration
+app.use(cors({
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true
+}));
+
+// Handle CORS preflight requests
+app.options('*', cors());
 
 mongoose.connect(process.env.MONGODB_URL).then(()=> {
     console.log("MongoDB Connected da....")
