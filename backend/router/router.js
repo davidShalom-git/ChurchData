@@ -1,22 +1,25 @@
 const express = require('express');
 const router = express.Router();
-const data = require('../models/Video');
+const Video = require('../models/Video'); // Fixed model import
 
+// POST Endpoint for video upload
+router.post('/video', async (req, res) => {
+    try {
+        if (!req.body.title || !req.body.url) {
+            return res.status(400).json({ message: "❌ Title and URL are required" });
+        }
 
-router.post('/video',(req,res)=> {
-    const createData = new data({
-        title: req.body.title,
-        url: req.body.url,
-    })
+        const createData = new Video({
+            title: req.body.title,
+            url: req.body.url,
+        });
 
-    try{
-        const newData = createData.save();
-        res.status(201).json(newData)
+        const newData = await createData.save();
+        res.status(201).json(newData);
+    } catch (error) {
+        console.error("❌ Error saving video:", error);
+        res.status(500).json({ message: "🔥 Internal Server Error", error });
     }
-    catch(error){
-        res.status(400).json({message: "Kolaaru aagidichi"})
-    }
-})
-
+});
 
 module.exports = router;

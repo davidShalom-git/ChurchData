@@ -2,18 +2,17 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const data = require('./router/router');
-const { default: mongoose } = require('mongoose');
+const mongoose = require('mongoose');
 require('dotenv').config();
-
-
+const dataRouter = require('./router/router'); // Fixed router import
 
 app.use(bodyParser.json());
+
+// CORS configuration
 const allowedOrigins = [
     'https://church-data-56lv.vercel.app',
 ];
 
-// CORS configuration
 app.use(cors({
     origin: function (origin, callback) {
         if (!origin || allowedOrigins.includes(origin)) {
@@ -29,13 +28,15 @@ app.use(cors({
 // Handle CORS preflight requests
 app.options('*', cors());
 
-mongoose.connect(process.env.MONGODB_URL).then(()=> {
-    console.log("MongoDB Connected da....")
-}).catch("MongoDB Connection la Kolaaaru")
+// MongoDB Connection
+mongoose.connect(process.env.MONGODB_URL)
+    .then(() => console.log("✅ MongoDB Connected successfully"))
+    .catch(err => console.error("❌ MongoDB Connection Error:", err));
 
-app.use('/upload/data',data);
+// Use the router correctly
+app.use('/upload/data', dataRouter);
 
-
-app.listen(2000,()=> {
-    console.log("Jesus");
-})
+// Start Server
+app.listen(2000, () => {
+    console.log("🚀 Server running on port 2000");
+});

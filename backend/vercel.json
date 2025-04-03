@@ -8,6 +8,6 @@
       }
     ],
     "routes": [
-      { "src": "/upload/(.*)", "dest": "Server.js" }
+      { "src": "/upload/data/(.*)", "dest": "Server.js" }
     ]
 }
