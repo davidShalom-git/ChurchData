@@ -9,26 +9,13 @@ const dataRouter = require('./router/router'); // Fixed router import
 app.use(bodyParser.json());
 
 // CORS configuration
-const allowedOrigins = [
-    'https://church-data-56lv.vercel.app', // Deployed frontend
-    'http://localhost:5173' // Local frontend
-];
-
 app.use(cors({
-    origin: function (origin, callback) {
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
+    origin: '*', // Allow all origins (For debugging, replace '*' with your frontend URL in production)
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
 }));
 
-// Handle CORS preflight requests
-app.options('*', cors());
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URL)
