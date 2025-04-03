@@ -11,7 +11,6 @@ require('dotenv').config();
 app.use(bodyParser.json());
 const allowedOrigins = [
     'https://church-data-56lv.vercel.app',
-    'https://church-rosy-rho.vercel.app'
 ];
 
 // CORS configuration
