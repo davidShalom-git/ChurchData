@@ -10,7 +10,8 @@ app.use(bodyParser.json());
 
 // CORS configuration
 const allowedOrigins = [
-    'https://church-data-56lv.vercel.app',
+    'https://church-data-56lv.vercel.app', // Deployed frontend
+    'http://localhost:5173' // Local frontend
 ];
 
 app.use(cors({
@@ -22,6 +23,7 @@ app.use(cors({
         }
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
 }));
 
