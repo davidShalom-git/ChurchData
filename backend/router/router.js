@@ -22,4 +22,17 @@ router.post('/video', async (req, res) => {
     }
 });
 
+router.get('/url',async(req,res)=> {
+    try{
+        const data = await Video.find({})
+        if(!data){
+            res.status(404).json({message: "data not found"})
+        }
+        res.json(data)
+    }
+    catch(error){
+        res.status(400).json({message: "data not found"})
+    }
+})
+
 module.exports = router;
