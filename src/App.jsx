@@ -8,15 +8,6 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
 
-  
-   const [imageState, setImageState] = useState({
-    file: null,
-    loading: false,
-    message: null
-  });
-
-
-  
 
   // New image upload state
   const [uploadState, setUploadState] = useState({
@@ -124,7 +115,7 @@ const ImageUploadSection = ({ language, uploadState, setUploadState }) => {
     }));
   };
 
-  const handleImageUpload = async () => {
+ const handleImageUpload = async () => {
     if (!uploadState[language].file) {
       setUploadState(prev => ({
         ...prev,
@@ -142,22 +133,30 @@ const ImageUploadSection = ({ language, uploadState, setUploadState }) => {
     formData.append('image', uploadState[language].file);
 
     try {
-      const endpoint = language === 'tamil' ? '/tam' : '/eng';
-      await axios.post(`https://church-fire.vercel.app/api/image/upload${endpoint}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+      const response = await axios.post('https://church-fire.vercel.app/api/image/upload', formData, {
+        headers: { 
+          'Content-Type': 'multipart/form-data'
+        }
       });
+
+      if (!response.data) throw new Error('No response from server');
 
       setUploadState(prev => ({
         ...prev,
         [language]: { file: null, loading: false, message: '✅ Upload successful!' }
       }));
     } catch (error) {
+      console.error('Upload error:', error.response?.data || error.message);
       setUploadState(prev => ({
         ...prev,
-        [language]: { ...prev[language], loading: false, message: '❌ Upload failed' }
+        [language]: { 
+          ...prev[language], 
+          loading: false, 
+          message: `❌ Upload failed: ${error.response?.data?.message || error.message}`
+        }
       }));
     }
-  };
+};
 
   return (
     <motion.div
@@ -228,7 +227,7 @@ const EventImage = () =>{
     }));
   };
 
-  const handleImageUpload = async () => {
+const handleImageUpload = async () => {
     if (!imageState.file) {
       setImageState(prev => ({
         ...prev,
@@ -237,35 +236,38 @@ const EventImage = () =>{
       return;
     }
 
-      setImageState(prev => ({
+    setImageState(prev => ({
       ...prev,
       loading: true,
       message: null
     }));
 
-      const formData = new FormData();
+    const formData = new FormData();
     formData.append('image', imageState.file);
 
     try {
-      await axios.post('https://church-fire.vercel.app/api/image/upload', formData, {
+      const response = await axios.post('https://church-fire.vercel.app/api/image/upload', formData, {
         headers: { 
           'Content-Type': 'multipart/form-data'
         }
       });
- setImageState({
+
+      if (!response.data) throw new Error('No response from server');
+
+      setImageState({
         file: null,
         loading: false,
         message: '✅ Upload successful!'
       });
     } catch (error) {
-      console.error('Upload error:', error);
+      console.error('Upload error:', error.response?.data || error.message);
       setImageState(prev => ({
         ...prev,
         loading: false,
-        message: '❌ Upload failed'
+        message: `❌ Upload failed: ${error.response?.data?.message || error.message}`
       }));
     }
-  };
+};
 return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
       <div className="max-w-lg mx-auto">
