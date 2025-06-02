@@ -143,7 +143,7 @@ const ImageUploadSection = ({ language, uploadState, setUploadState }) => {
 
     try {
       const endpoint = language === 'tamil' ? '/tam' : '/eng';
-      await axios.post(`http://localhost:1200/api/image/upload${endpoint}`, formData, {
+      await axios.post(`https://church-fire.vercel.app/api/image/upload${endpoint}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
@@ -247,7 +247,7 @@ const EventImage = () =>{
     formData.append('image', imageState.file);
 
     try {
-      await axios.post('http://localhost:1200/api/image/upload', formData, {
+      await axios.post('https://church-fire.vercel.app/api/image/upload', formData, {
         headers: { 
           'Content-Type': 'multipart/form-data'
         }
