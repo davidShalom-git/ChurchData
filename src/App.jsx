@@ -115,11 +115,21 @@ const ImageUploadSection = ({ language, uploadState, setUploadState }) => {
     }));
   };
 
- const handleImageUpload = async () => {
+  const handleImageUpload = async () => {
     if (!uploadState[language].file) {
       setUploadState(prev => ({
         ...prev,
         [language]: { ...prev[language], message: '❌ Please select a file' }
+      }));
+      return;
+    }
+
+    // Add file size validation
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (uploadState[language].file.size > maxSize) {
+      setUploadState(prev => ({
+        ...prev,
+        [language]: { ...prev[language], message: '❌ File must be smaller than 5MB' }
       }));
       return;
     }
@@ -135,8 +145,16 @@ const ImageUploadSection = ({ language, uploadState, setUploadState }) => {
     try {
       const response = await axios.post('https://church-fire.vercel.app/api/image/upload', formData, {
         headers: { 
-          'Content-Type': 'multipart/form-data'
-        }
+          'Content-Type': 'multipart/form-data',
+          'Accept': 'application/json',
+          // Add CORS headers
+          'Access-Control-Allow-Origin': 'https://church-data-56lv.vercel.app',
+          'Access-Control-Allow-Methods': 'POST',
+          'Access-Control-Allow-Headers': 'Content-Type'
+        },
+        // Add additional config
+        withCredentials: true,
+        timeout: 30000
       });
 
       if (!response.data) throw new Error('No response from server');
@@ -146,13 +164,27 @@ const ImageUploadSection = ({ language, uploadState, setUploadState }) => {
         [language]: { file: null, loading: false, message: '✅ Upload successful!' }
       }));
     } catch (error) {
-      console.error('Upload error:', error.response?.data || error.message);
+      console.error('Upload error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+
+      let errorMessage = '❌ Upload failed: ';
+      if (error.message === 'Network Error') {
+        errorMessage += 'CORS error - Please check server configuration';
+      } else if (error.response?.status === 500) {
+        errorMessage += 'Server error - Please try again later';
+      } else {
+        errorMessage += error.response?.data?.message || error.message;
+      }
+
       setUploadState(prev => ({
         ...prev,
         [language]: { 
           ...prev[language], 
           loading: false, 
-          message: `❌ Upload failed: ${error.response?.data?.message || error.message}`
+          message: errorMessage
         }
       }));
     }
