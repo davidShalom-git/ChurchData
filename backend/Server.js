@@ -11,27 +11,32 @@ app.use(bodyParser.json());
 // CORS configuration
 const allowedOrigins = [
     'https://church-grace.vercel.app',
-    'http://localhost:4000',
+    'https://church-data-56lv.vercel.app',
+    'https://church-data.vercel.app',
+    'https://church-fire.vercel.app',
     'https://www.revivalprayerhouse.online',
+    'http://localhost:4000',
     'http://localhost:1200',
     'http://localhost:1000',
-    'http://localhost:2000',
-    'https://church-fire.vercel.app',
-    'https://church-data-56lv.vercel.app',
-    'https://church-data.vercel.app'
+    'http://localhost:2000'
 ];
 
 // CORS configuration
 app.use(cors({
     origin: function (origin, callback) {
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        
+        if (allowedOrigins.indexOf(origin) === -1) {
+            console.log('Blocked origin:', origin);
+            return callback(new Error('CORS not allowed'));
         }
+        return callback(null, true);
     },
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    credentials: true
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    credentials: true,
+    maxAge: 86400 // Cache CORS preflight response for 24 hours
 }));
 
 // Handle CORS preflight requests
