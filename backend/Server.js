@@ -9,13 +9,32 @@ const dataRouter = require('./router/router'); // Fixed router import
 app.use(bodyParser.json());
 
 // CORS configuration
+const allowedOrigins = [
+    'https://church-grace.vercel.app',
+    'http://localhost:4000',
+    'https://www.revivalprayerhouse.online',
+    'http://localhost:1200',
+    'http://localhost:1000',
+    'http://localhost:2000',
+    'https://church-fire.vercel.app',
+    'https://church-data-56lv.vercel.app'
+];
+
+// CORS configuration
 app.use(cors({
-    origin: '*', // Allow all origins (For debugging, replace '*' with your frontend URL in production)
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
 }));
 
+// Handle CORS preflight requests
+app.options('*', cors());
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URL)
