@@ -18,6 +18,7 @@ const allowedOrigins = [
     'https://church-fire.vercel.app/api/image/upload/eng',
     'https://church-fire.vercel.app/api/image/upload',
     'https://www.revivalprayerhouse.online',
+    'https://church-data.vercel.app',
     'http://localhost:4000',
     'http://localhost:1200',
     'http://localhost:1000',
