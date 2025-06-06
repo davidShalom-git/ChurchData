@@ -9,42 +9,46 @@ const dataRouter = require('./router/router'); // Fixed router import
 app.use(bodyParser.json());
 
 // CORS configuration
+
+// Update the allowedOrigins array and CORS configuration
+
 const allowedOrigins = [
     'https://church-grace.vercel.app',
     'https://church-data-56lv.vercel.app',
     'https://church-data.vercel.app',
     'https://church-fire.vercel.app',
-    'https://church-fire.vercel.app/api/image/upload/tam',
-    'https://church-fire.vercel.app/api/image/upload/eng',
-    'https://church-fire.vercel.app/api/image/upload',
     'https://www.revivalprayerhouse.online',
-    'https://church-data.vercel.app',
     'http://localhost:4000',
     'http://localhost:1200',
     'http://localhost:1000',
     'http://localhost:2000'
 ];
 
-// CORS configuration
+// Update CORS configuration
 app.use(cors({
-    origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-        
-        if (allowedOrigins.indexOf(origin) === -1) {
-            console.log('Blocked origin:', origin);
-            return callback(new Error('CORS not allowed'));
-        }
-        return callback(null, true);
-    },
+    origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     credentials: true,
-    maxAge: 86400 // Cache CORS preflight response for 24 hours
+    maxAge: 86400,
+    preflightContinue: false,
+    optionsSuccessStatus: 204
 }));
 
-// Handle CORS preflight requests
-app.options('*', cors());
+// Add headers middleware
+app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    next();
+});
+
+// Remove this line since we have CORS configured above
+// app.options('*', cors());
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URL)
