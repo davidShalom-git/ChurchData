@@ -144,7 +144,7 @@ const TamilImageUpload = ({ uploadState, setUploadState }) => {
     formData.append('image', uploadState.tamil.file);
 
     try {
-      const response = await axios.post('https://church-fire.vercel.app/api/image/upload/tam', formData, {
+      const response = await axios.post('https://church-76ju.vercel.app/api/church/tam', formData, {
         headers: { 
           'Content-Type': 'multipart/form-data',
           'Accept': 'application/json'
@@ -271,7 +271,7 @@ const EnglishImageUpload = ({ uploadState, setUploadState }) => {
     formData.append('image', uploadState.english.file);
 
     try {
-      const response = await axios.post('https://church-fire.vercel.app/api/image/upload/eng', formData, {
+      const response = await axios.post('https://church-76ju.vercel.app/api/church/eng', formData, {
         headers: { 
           'Content-Type': 'multipart/form-data',
           'Accept': 'application/json'
@@ -406,7 +406,7 @@ const EventImageUpload = () => {
     formData.append('image', imageState.file);
 
     try {
-      const response = await axios.post('https://church-fire.vercel.app/api/image/upload', formData, {
+      const response = await axios.post('https://church-76ju.vercel.app/api/church/upload', formData, {
         headers: { 
           'Content-Type': 'multipart/form-data',
           'Accept': 'application/json'
