@@ -1,21 +1,20 @@
-import { useState, useRef } from 'react';
-import axios from 'axios';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import axios from 'axios';
 
 function App() {
-  // Video upload state
+  // Existing video upload state
   const [formData, setFormData] = useState({ title: '', url: '' });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
 
-  // Image upload state
+  // New image upload state
   const [uploadState, setUploadState] = useState({
     tamil: { file: null, loading: false, message: null },
-    english: { file: null, loading: false, message: null },
-    event: { file: null, loading: false, message: null },
+    english: { file: null, loading: false, message: null }
   });
 
-  // Video upload handlers
+  // Existing video upload handlers
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -29,7 +28,7 @@ function App() {
       const response = await fetch('https://church-data.vercel.app/upload/data/video', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(formData)
       });
 
       if (!response.ok) throw new Error('Failed to upload video');
@@ -48,11 +47,13 @@ function App() {
       <div className="flex items-center justify-center">
         <div className="bg-gray-800 shadow-xl rounded-xl p-8 w-full max-w-lg">
           <h2 className="text-2xl font-bold mb-6 text-center">🚀 Upload Your Video</h2>
+          
           {message && (
             <div className={`text-center p-3 ${message.includes('Error') ? 'text-red-500' : 'text-green-400'}`}>
               {message}
             </div>
           )}
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <input
               type="text"
@@ -63,6 +64,7 @@ function App() {
               required
               className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-3"
             />
+
             <input
               type="url"
               name="url"
@@ -73,6 +75,7 @@ function App() {
               required
               className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-3"
             />
+
             <button
               type="submit"
               disabled={loading}
@@ -85,103 +88,95 @@ function App() {
       </div>
 
       {/* Image Upload Sections */}
-      <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-        <TamilImageUpload uploadState={uploadState} setUploadState={setUploadState} />
-        <EnglishImageUpload uploadState={uploadState} setUploadState={setUploadState} />
-        <EventImageUpload uploadState={uploadState} setUploadState={setUploadState} />
+      <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        <TamilImageUpload 
+          uploadState={uploadState}
+          setUploadState={setUploadState}
+        />
+        <EnglishImageUpload 
+          uploadState={uploadState}
+          setUploadState={setUploadState}
+        />
+      </div>
+      
+      {/* Event Image Upload Section */}
+      <div className="flex items-center justify-center">
+        <EventImageUpload />
       </div>
     </div>
   );
 }
 
 const TamilImageUpload = ({ uploadState, setUploadState }) => {
-  const fileInputRef = useRef(null);
-
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    setUploadState((prev) => ({
+    setUploadState(prev => ({
       ...prev,
-      tamil: { ...prev.tamil, file, message: null },
+      tamil: { ...prev.tamil, file, message: null }
     }));
   };
 
   const handleImageUpload = async () => {
     if (!uploadState.tamil.file) {
-      setUploadState((prev) => ({
+      setUploadState(prev => ({
         ...prev,
-        tamil: { ...prev.tamil, message: '❌ Please select a file' },
+        tamil: { ...prev.tamil, message: '❌ Please select a file' }
       }));
       return;
     }
 
+    // Add file size validation
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (uploadState.tamil.file.size > maxSize) {
-      setUploadState((prev) => ({
+      setUploadState(prev => ({
         ...prev,
-        tamil: { ...prev.tamil, message: '❌ File must be smaller than 5MB' },
+        tamil: { ...prev.tamil, message: '❌ File must be smaller than 5MB' }
       }));
       return;
     }
 
-    setUploadState((prev) => ({
+    setUploadState(prev => ({
       ...prev,
-      tamil: { ...prev.tamil, loading: true, message: null },
+      tamil: { ...prev.tamil, loading: true, message: null }
     }));
 
     const formData = new FormData();
     formData.append('image', uploadState.tamil.file);
 
     try {
-      const response = await axios.post(
-        'https://church-76ju.vercel.app/api/church/tamil/upload',
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            'Accept': 'application/json',
-          },
-          timeout: 30000,
-        }
-      );
+      const response = await axios.post('https://church-76ju.vercel.app/api/church/tam', formData, {
+        headers: { 
+          'Content-Type': 'multipart/form-data',
+          'Accept': 'application/json'
+        },
+        timeout: 30000
+      });
 
       if (!response.data) throw new Error('No response from server');
 
-      setUploadState((prev) => ({
+      setUploadState(prev => ({
         ...prev,
-        tamil: { file: null, loading: false, message: '✅ Tamil image uploaded successfully!' },
+        tamil: { file: null, loading: false, message: '✅ Tamil image uploaded successfully!' }
       }));
-
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
     } catch (error) {
-      console.error('Tamil upload error:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-        headers: error.response?.headers,
-      });
+      console.error('Tamil upload error:', error);
 
       let errorMessage = '❌ Tamil upload failed: ';
-      if (error.code === 'ECONNABORTED') {
-        errorMessage += 'Request timed out - Please try again';
-      } else if (error.message === 'Network Error') {
+      if (error.message === 'Network Error') {
         errorMessage += 'Network error - Please check connection';
-      } else if (error.response) {
-        if (error.response.status === 500) {
-          errorMessage += error.response.data.message || 'Server error - Please try again later';
-        } else if (error.response.status === 400) {
-          errorMessage += error.response.data.message || 'Invalid file or request';
-        } else {
-          errorMessage += error.response.data.message || 'Unexpected error';
-        }
+      } else if (error.response?.status === 500) {
+        errorMessage += 'Server error - Please try again later';
       } else {
-        errorMessage += error.message;
+        errorMessage += error.response?.data?.message || error.message;
       }
 
-      setUploadState((prev) => ({
+      setUploadState(prev => ({
         ...prev,
-        tamil: { ...prev.tamil, loading: false, message: errorMessage },
+        tamil: { 
+          ...prev.tamil, 
+          loading: false, 
+          message: errorMessage
+        }
       }));
     }
   };
@@ -192,24 +187,27 @@ const TamilImageUpload = ({ uploadState, setUploadState }) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
     >
-      <h3 className="text-xl font-bold mb-4 text-center">🌟 Upload Tamil Image</h3>
+      <h3 className="text-xl font-bold mb-4 text-center">
+        🌟 Upload Tamil Image
+      </h3>
+      
       <div className="space-y-4">
         <input
           type="file"
           accept="image/*"
           onChange={handleFileChange}
-          ref={fileInputRef}
           className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2
-                     file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0
-                     file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700
-                     hover:file:bg-blue-100"
+                   file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0
+                   file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700
+                   hover:file:bg-blue-100"
         />
+        
         <motion.button
           onClick={handleImageUpload}
           disabled={uploadState.tamil.loading}
           className={`w-full px-6 py-3 rounded-lg ${
-            uploadState.tamil.loading
-              ? 'bg-gray-600'
+            uploadState.tamil.loading 
+              ? 'bg-gray-600' 
               : 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600'
           }`}
           whileHover={{ scale: 1.02 }}
@@ -217,12 +215,15 @@ const TamilImageUpload = ({ uploadState, setUploadState }) => {
         >
           {uploadState.tamil.loading ? 'Uploading...' : 'Upload Tamil Image'}
         </motion.button>
+
         {uploadState.tamil.message && (
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className={`text-center ${
-              uploadState.tamil.message.includes('❌') ? 'text-red-500' : 'text-green-400'
+              uploadState.tamil.message.includes('❌') 
+                ? 'text-red-500' 
+                : 'text-green-400'
             }`}
           >
             {uploadState.tamil.message}
@@ -234,93 +235,75 @@ const TamilImageUpload = ({ uploadState, setUploadState }) => {
 };
 
 const EnglishImageUpload = ({ uploadState, setUploadState }) => {
-  const fileInputRef = useRef(null);
-
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    setUploadState((prev) => ({
+    setUploadState(prev => ({
       ...prev,
-      english: { ...prev.english, file, message: null },
+      english: { ...prev.english, file, message: null }
     }));
   };
 
   const handleImageUpload = async () => {
     if (!uploadState.english.file) {
-      setUploadState((prev) => ({
+      setUploadState(prev => ({
         ...prev,
-        english: { ...prev.english, message: '❌ Please select a file' },
+        english: { ...prev.english, message: '❌ Please select a file' }
       }));
       return;
     }
 
+    // Add file size validation
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (uploadState.english.file.size > maxSize) {
-      setUploadState((prev) => ({
+      setUploadState(prev => ({
         ...prev,
-        english: { ...prev.english, message: '❌ File must be smaller than 5MB' },
+        english: { ...prev.english, message: '❌ File must be smaller than 5MB' }
       }));
       return;
     }
 
-    setUploadState((prev) => ({
+    setUploadState(prev => ({
       ...prev,
-      english: { ...prev.english, loading: true, message: null },
+      english: { ...prev.english, loading: true, message: null }
     }));
 
     const formData = new FormData();
     formData.append('image', uploadState.english.file);
 
     try {
-      const response = await axios.post(
-        'https://church-76ju.vercel.app/api/church/english/upload',
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            'Accept': 'application/json',
-          },
-          timeout: 30000,
-        }
-      );
+      const response = await axios.post('https://church-76ju.vercel.app/api/church/eng', formData, {
+        headers: { 
+          'Content-Type': 'multipart/form-data',
+          'Accept': 'application/json'
+        },
+        timeout: 30000
+      });
 
       if (!response.data) throw new Error('No response from server');
 
-      setUploadState((prev) => ({
+      setUploadState(prev => ({
         ...prev,
-        english: { file: null, loading: false, message: '✅ English image uploaded successfully!' },
+        english: { file: null, loading: false, message: '✅ English image uploaded successfully!' }
       }));
-
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
     } catch (error) {
-      console.error('English upload error:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-        headers: error.response?.headers,
-      });
+      console.error('English upload error:', error);
 
       let errorMessage = '❌ English upload failed: ';
-      if (error.code === 'ECONNABORTED') {
-        errorMessage += 'Request timed out - Please try again';
-      } else if (error.message === 'Network Error') {
+      if (error.message === 'Network Error') {
         errorMessage += 'Network error - Please check connection';
-      } else if (error.response) {
-        if (error.response.status === 500) {
-          errorMessage += error.response.data.message || 'Server error - Please try again later';
-        } else if (error.response.status === 400) {
-          errorMessage += error.response.data.message || 'Invalid file or request';
-        } else {
-          errorMessage += error.response.data.message || 'Unexpected error';
-        }
+      } else if (error.response?.status === 500) {
+        errorMessage += 'Server error - Please try again later';
       } else {
-        errorMessage += error.message;
+        errorMessage += error.response?.data?.message || error.message;
       }
 
-      setUploadState((prev) => ({
+      setUploadState(prev => ({
         ...prev,
-        english: { ...prev.english, loading: false, message: errorMessage },
+        english: { 
+          ...prev.english, 
+          loading: false, 
+          message: errorMessage
+        }
       }));
     }
   };
@@ -331,24 +314,27 @@ const EnglishImageUpload = ({ uploadState, setUploadState }) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
     >
-      <h3 className="text-xl font-bold mb-4 text-center">🌟 Upload English Image</h3>
+      <h3 className="text-xl font-bold mb-4 text-center">
+        🌟 Upload English Image
+      </h3>
+      
       <div className="space-y-4">
         <input
           type="file"
           accept="image/*"
           onChange={handleFileChange}
-          ref={fileInputRef}
           className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2
-                     file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0
-                     file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700
-                     hover:file:bg-blue-100"
+                   file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0
+                   file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700
+                   hover:file:bg-blue-100"
         />
+        
         <motion.button
           onClick={handleImageUpload}
           disabled={uploadState.english.loading}
           className={`w-full px-6 py-3 rounded-lg ${
-            uploadState.english.loading
-              ? 'bg-gray-600'
+            uploadState.english.loading 
+              ? 'bg-gray-600' 
               : 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600'
           }`}
           whileHover={{ scale: 1.02 }}
@@ -356,12 +342,15 @@ const EnglishImageUpload = ({ uploadState, setUploadState }) => {
         >
           {uploadState.english.loading ? 'Uploading...' : 'Upload English Image'}
         </motion.button>
+
         {uploadState.english.message && (
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className={`text-center ${
-              uploadState.english.message.includes('❌') ? 'text-red-500' : 'text-green-400'
+              uploadState.english.message.includes('❌') 
+                ? 'text-red-500' 
+                : 'text-green-400'
             }`}
           >
             {uploadState.english.message}
@@ -372,142 +361,138 @@ const EnglishImageUpload = ({ uploadState, setUploadState }) => {
   );
 };
 
-const EventImageUpload = ({ uploadState, setUploadState }) => {
-  const fileInputRef = useRef(null);
+const EventImageUpload = () => {
+  const [imageState, setImageState] = useState({
+    file: null,
+    loading: false,
+    message: null
+  });
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    setUploadState((prev) => ({
+    setImageState(prev => ({
       ...prev,
-      event: { ...prev.event, file, message: null },
+      file,
+      message: null
     }));
   };
 
   const handleImageUpload = async () => {
-    if (!uploadState.event.file) {
-      setUploadState((prev) => ({
+    if (!imageState.file) {
+      setImageState(prev => ({
         ...prev,
-        event: { ...prev.event, message: '❌ Please select a file' },
+        message: '❌ Please select a file'
       }));
       return;
     }
 
+    // Add file size validation
     const maxSize = 5 * 1024 * 1024; // 5MB
-    if (uploadState.event.file.size > maxSize) {
-      setUploadState((prev) => ({
+    if (imageState.file.size > maxSize) {
+      setImageState(prev => ({
         ...prev,
-        event: { ...prev.event, message: '❌ File must be smaller than 5MB' },
+        message: '❌ File must be smaller than 5MB'
       }));
       return;
     }
 
-    setUploadState((prev) => ({
+    setImageState(prev => ({
       ...prev,
-      event: { ...prev.event, loading: true, message: null },
+      loading: true,
+      message: null
     }));
 
     const formData = new FormData();
-    formData.append('image', uploadState.event.file);
+    formData.append('image', imageState.file);
 
     try {
-      const response = await axios.post(
-        'https://church-76ju.vercel.app/api/church/event/upload',
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            'Accept': 'application/json',
-          },
-          timeout: 30000,
-        }
-      );
+      const response = await axios.post('https://church-76ju.vercel.app/api/church/upload', formData, {
+        headers: { 
+          'Content-Type': 'multipart/form-data',
+          'Accept': 'application/json'
+        },
+        timeout: 30000
+      });
 
       if (!response.data) throw new Error('No response from server');
 
-      setUploadState((prev) => ({
-        ...prev,
-        event: { file: null, loading: false, message: '✅ Event image uploaded successfully!' },
-      }));
-
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    } catch (error) {
-      console.error('Event upload error:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-        headers: error.response?.headers,
+      setImageState({
+        file: null,
+        loading: false,
+        message: '✅ Event image uploaded successfully!'
       });
-
+    } catch (error) {
+      console.error('Event upload error:', error);
+      
       let errorMessage = '❌ Event upload failed: ';
-      if (error.code === 'ECONNABORTED') {
-        errorMessage += 'Request timed out - Please try again';
-      } else if (error.message === 'Network Error') {
+      if (error.message === 'Network Error') {
         errorMessage += 'Network error - Please check connection';
-      } else if (error.response) {
-        if (error.response.status === 500) {
-          errorMessage += error.response.data.message || 'Server error - Please try again later';
-        } else if (error.response.status === 400) {
-          errorMessage += error.response.data.message || 'Invalid file or request';
-        } else {
-          errorMessage += error.response.data.message || 'Unexpected error';
-        }
+      } else if (error.response?.status === 500) {
+        errorMessage += 'Server error - Please try again later';
       } else {
-        errorMessage += error.message;
+        errorMessage += error.response?.data?.message || error.message;
       }
 
-      setUploadState((prev) => ({
+      setImageState(prev => ({
         ...prev,
-        event: { ...prev.event, loading: false, message: errorMessage },
+        loading: false,
+        message: errorMessage
       }));
     }
   };
 
   return (
-    <motion.div
-      className="bg-gray-800 shadow-xl rounded-xl p-6"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-    >
-      <h3 className="text-xl font-bold mb-4 text-center">🌟 Upload Event Image</h3>
-      <div className="space-y-4">
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-          ref={fileInputRef}
-          className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2
+    <div className="w-full max-w-lg">
+      <motion.div
+        className="bg-gray-800 shadow-xl rounded-xl p-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <h3 className="text-xl font-bold mb-4 text-center">
+          🌟 Upload Event Image
+        </h3>
+        
+        <div className="space-y-4">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2
                      file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0
                      file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700
                      hover:file:bg-blue-100"
-        />
-        <motion.button
-          onClick={handleImageUpload}
-          disabled={uploadState.event.loading}
-          className={`w-full px-6 py-3 rounded-lg ${
-            uploadState.event.loading
-              ? 'bg-gray-600'
-              : 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600'
-          }`}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          {uploadState.event.loading ? 'Uploading...' : 'Upload Event Image'}
-        </motion.button>
-        {uploadState.event.message && (
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className={`text-center ${
-              uploadState.event.message.includes('❌') ? 'text-red-500' : 'text-green-400'
+          />
+           
+          <motion.button
+            onClick={handleImageUpload}
+            disabled={imageState.loading}
+            className={`w-full px-6 py-3 rounded-lg ${
+              imageState.loading 
+                ? 'bg-gray-600' 
+                : 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600'
             }`}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
           >
-            {uploadState.event.message}
-          </motion.p>
-        )}
-      </div>
-    </motion.div>
+            {imageState.loading ? 'Uploading...' : 'Upload Event Image'}
+          </motion.button>
+
+          {imageState.message && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className={`text-center ${
+                imageState.message.includes('❌') 
+                  ? 'text-red-500' 
+                  : 'text-green-400'
+              }`}
+            >
+              {imageState.message}
+            </motion.p>
+          )}
+        </div>
+      </motion.div>
+    </div>
   );
 };
 
