@@ -495,5 +495,4 @@ const EventImageUpload = () => {
     </div>
   );
 };
-
 export default App;
