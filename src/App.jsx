@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 
@@ -515,6 +515,10 @@ const EventImageUpload = () => {
 };
 
 
+<<<<<<< HEAD
 
 
 export default App;
+=======
+export default App;
+>>>>>>> b9474a9546d350f936f24058dad2e9b1a49e192e
