@@ -418,12 +418,13 @@ const EventImageUpload = () => {
 
     try {
       const response = await axios.post('https://church-76ju.vercel.app/api/church/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          'Accept': 'application/json'
-        },
-        timeout: 30000
-      });
+  headers: {
+    'Content-Type': 'multipart/form-data',
+    'Accept': 'application/json',
+    'Access-Control-Allow-Origin': '*'
+  }
+});
+
 
       if (!response.data) throw new Error('No response from server');
 
