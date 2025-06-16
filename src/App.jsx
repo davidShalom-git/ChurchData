@@ -133,7 +133,7 @@ const TamilImageUpload = ({ uploadState, setUploadState }) => {
 
     try {
       const response = await axios.post(
-        'https://church-76ju.vercel.app/api/church/tamil/upload',
+        'https://church-76ju.vercel.app/api/church/tam',
         formData,
         {
           headers: {
@@ -272,7 +272,7 @@ const EnglishImageUpload = ({ uploadState, setUploadState }) => {
 
     try {
       const response = await axios.post(
-        'https://church-76ju.vercel.app/api/church/english/upload',
+        'https://church-76ju.vercel.app/api/church/eng',
         formData,
         {
           headers: {
@@ -411,7 +411,7 @@ const EventImageUpload = ({ uploadState, setUploadState }) => {
 
     try {
       const response = await axios.post(
-        'https://church-76ju.vercel.app/api/church/event/upload',
+        'https://church-76ju.vercel.app/api/church/upload',
         formData,
         {
           headers: {
