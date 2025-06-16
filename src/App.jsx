@@ -370,6 +370,27 @@ const EventImageUpload = () => {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      setImageState(prev => ({
+        ...prev,
+        message: '❌ Only JPG, PNG, or GIF files are allowed'
+      }));
+      return;
+    }
+
+    // Validate file size
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      setImageState(prev => ({
+        ...prev,
+        message: '❌ File must be smaller than 5MB'
+      }));
+      return;
+    }
+
     setImageState(prev => ({
       ...prev,
       file,
@@ -386,16 +407,6 @@ const EventImageUpload = () => {
       return;
     }
 
-    // Add file size validation
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    if (imageState.file.size > maxSize) {
-      setImageState(prev => ({
-        ...prev,
-        message: '❌ File must be smaller than 5MB'
-      }));
-      return;
-    }
-
     setImageState(prev => ({
       ...prev,
       loading: true,
@@ -407,7 +418,7 @@ const EventImageUpload = () => {
 
     try {
       const response = await axios.post('https://church-76ju.vercel.app/api/church/upload', formData, {
-        headers: { 
+        headers: {
           'Content-Type': 'multipart/form-data',
           'Accept': 'application/json'
         },
@@ -423,10 +434,12 @@ const EventImageUpload = () => {
       });
     } catch (error) {
       console.error('Event upload error:', error);
-      
+
       let errorMessage = '❌ Event upload failed: ';
       if (error.message === 'Network Error') {
-        errorMessage += 'Network error - Please check connection';
+        errorMessage += 'Network error - Please check your connection';
+      } else if (error.response?.status === 400) {
+        errorMessage += 'Bad request - Ensure the file format and payload are correct';
       } else if (error.response?.status === 500) {
         errorMessage += 'Server error - Please try again later';
       } else {
@@ -440,6 +453,7 @@ const EventImageUpload = () => {
       }));
     }
   };
+
 
   return (
     <div className="w-full max-w-lg">
