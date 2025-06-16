@@ -361,12 +361,16 @@ const EnglishImageUpload = ({ uploadState, setUploadState }) => {
   );
 };
 
+
 const EventImageUpload = () => {
   const [imageState, setImageState] = useState({
     file: null,
+    category: 'general',
+    description: '',
     loading: false,
     message: null
   });
+  const fileInputRef = useRef(null); // To reset file input
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -374,6 +378,20 @@ const EventImageUpload = () => {
       ...prev,
       file,
       message: null
+    }));
+  };
+
+  const handleCategoryChange = (e) => {
+    setImageState(prev => ({
+      ...prev,
+      category: e.target.value
+    }));
+  };
+
+  const handleDescriptionChange = (e) => {
+    setImageState(prev => ({
+      ...prev,
+      description: e.target.value
     }));
   };
 
@@ -386,7 +404,6 @@ const EventImageUpload = () => {
       return;
     }
 
-    // Add file size validation
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (imageState.file.size > maxSize) {
       setImageState(prev => ({
@@ -404,10 +421,12 @@ const EventImageUpload = () => {
 
     const formData = new FormData();
     formData.append('image', imageState.file);
+    formData.append('category', imageState.category);
+    formData.append('description', imageState.description);
 
     try {
       const response = await axios.post('https://church-76ju.vercel.app/api/church/upload', formData, {
-        headers: { 
+        headers: {
           'Content-Type': 'multipart/form-data',
           'Accept': 'application/json'
         },
@@ -418,19 +437,33 @@ const EventImageUpload = () => {
 
       setImageState({
         file: null,
+        category: 'general',
+        description: '',
         loading: false,
         message: '✅ Event image uploaded successfully!'
       });
+
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     } catch (error) {
       console.error('Event upload error:', error);
-      
       let errorMessage = '❌ Event upload failed: ';
-      if (error.message === 'Network Error') {
+      if (error.code === 'ECONNABORTED') {
+        errorMessage += 'Request timed out - Please try again';
+      } else if (error.message === 'Network Error') {
         errorMessage += 'Network error - Please check connection';
-      } else if (error.response?.status === 500) {
-        errorMessage += 'Server error - Please try again later';
+      } else if (error.response) {
+        if (error.response.status === 500) {
+          errorMessage += 'Server error - Please try again later';
+        } else if (error.response.status === 400) {
+          errorMessage += error.response.data.message || 'Invalid file or request';
+        } else {
+          errorMessage += error.response.data.message || 'Unexpected error';
+        }
       } else {
-        errorMessage += error.response?.data?.message || error.message;
+        errorMessage += error.message;
       }
 
       setImageState(prev => ({
@@ -457,18 +490,39 @@ const EventImageUpload = () => {
             type="file"
             accept="image/*"
             onChange={handleFileChange}
+            ref={fileInputRef}
             className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2
                      file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0
                      file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700
                      hover:file:bg-blue-100"
           />
-           
+
+          <select
+            value={imageState.category}
+            onChange={handleCategoryChange}
+            className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2"
+          >
+            <option value="general">General</option>
+            <option value="tamil">Tamil</option>
+            <option value="english">English</option>
+            <option value="event">Event</option>
+          </select>
+
+          <input
+            type="text"
+            value={imageState.description}
+            onChange={handleDescriptionChange}
+            placeholder="Image description (optional)"
+            maxLength={500}
+            className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2"
+          />
+
           <motion.button
             onClick={handleImageUpload}
             disabled={imageState.loading}
             className={`w-full px-6 py-3 rounded-lg ${
-              imageState.loading 
-                ? 'bg-gray-600' 
+              imageState.loading
+                ? 'bg-gray-600'
                 : 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600'
             }`}
             whileHover={{ scale: 1.02 }}
@@ -482,8 +536,8 @@ const EventImageUpload = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className={`text-center ${
-                imageState.message.includes('❌') 
-                  ? 'text-red-500' 
+                imageState.message.includes('❌')
+                  ? 'text-red-500'
                   : 'text-green-400'
               }`}
             >
@@ -495,5 +549,7 @@ const EventImageUpload = () => {
     </div>
   );
 };
+
+
 
 export default App;
