@@ -420,8 +420,7 @@ const EventImageUpload = () => {
       const response = await axios.post('https://church-76ju.vercel.app/api/church/upload', formData, {
   headers: {
     'Content-Type': 'multipart/form-data',
-    'Accept': 'application/json',
-    'Access-Control-Allow-Origin': '*'
+    'Accept': 'application/json'
   }
 });
 
