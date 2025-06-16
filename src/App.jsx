@@ -361,86 +361,69 @@ const EnglishImageUpload = ({ uploadState, setUploadState }) => {
   );
 };
 
-
 const EventImageUpload = () => {
   const [imageState, setImageState] = useState({
     file: null,
-    category: 'general',
-    description: '',
     loading: false,
-    message: null
+    message: null,
   });
   const fileInputRef = useRef(null); // To reset file input
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    setImageState(prev => ({
+    setImageState((prev) => ({
       ...prev,
       file,
-      message: null
-    }));
-  };
-
-  const handleCategoryChange = (e) => {
-    setImageState(prev => ({
-      ...prev,
-      category: e.target.value
-    }));
-  };
-
-  const handleDescriptionChange = (e) => {
-    setImageState(prev => ({
-      ...prev,
-      description: e.target.value
+      message: null,
     }));
   };
 
   const handleImageUpload = async () => {
     if (!imageState.file) {
-      setImageState(prev => ({
+      setImageState((prev) => ({
         ...prev,
-        message: '❌ Please select a file'
+        message: '❌ Please select a file',
       }));
       return;
     }
 
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (imageState.file.size > maxSize) {
-      setImageState(prev => ({
+      setImageState((prev) => ({
         ...prev,
-        message: '❌ File must be smaller than 5MB'
+        message: '❌ File must be smaller than 5MB',
       }));
       return;
     }
 
-    setImageState(prev => ({
+    setImageState((prev) => ({
       ...prev,
       loading: true,
-      message: null
+      message: null,
     }));
 
     const formData = new FormData();
     formData.append('image', imageState.file);
-    formData.append('category', imageState.category);
-    formData.append('description', imageState.description);
 
     try {
-      const response = await axios.post('https://church-76ju.vercel.app/api/church/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          'Accept': 'application/json'
-        },
-        timeout: 30000
-      });
+      const response = await axios.post(
+        'https://church-76ju.vercel.app/api/church/event/upload',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            'Accept': 'application/json',
+          },
+          timeout: 30000,
+        }
+      );
 
       if (!response.data) throw new Error('No response from server');
 
       setImageState({
         file: null,
-        category: 'general',
-        description: '',
         loading: false,
-        message: '✅ Event image uploaded successfully!'
+        message: '✅ Event image uploaded successfully!',
       });
 
       // Reset file input
@@ -448,7 +431,13 @@ const EventImageUpload = () => {
         fileInputRef.current.value = '';
       }
     } catch (error) {
-      console.error('Event upload error:', error);
+      console.error('Event upload error:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        headers: error.response?.headers,
+      });
+
       let errorMessage = '❌ Event upload failed: ';
       if (error.code === 'ECONNABORTED') {
         errorMessage += 'Request timed out - Please try again';
@@ -456,7 +445,7 @@ const EventImageUpload = () => {
         errorMessage += 'Network error - Please check connection';
       } else if (error.response) {
         if (error.response.status === 500) {
-          errorMessage += 'Server error - Please try again later';
+          errorMessage += error.response.data.message || 'Server error - Please try again later';
         } else if (error.response.status === 400) {
           errorMessage += error.response.data.message || 'Invalid file or request';
         } else {
@@ -466,10 +455,10 @@ const EventImageUpload = () => {
         errorMessage += error.message;
       }
 
-      setImageState(prev => ({
+      setImageState((prev) => ({
         ...prev,
         loading: false,
-        message: errorMessage
+        message: errorMessage,
       }));
     }
   };
@@ -484,7 +473,6 @@ const EventImageUpload = () => {
         <h3 className="text-xl font-bold mb-4 text-center">
           🌟 Upload Event Image
         </h3>
-        
         <div className="space-y-4">
           <input
             type="file"
@@ -492,31 +480,10 @@ const EventImageUpload = () => {
             onChange={handleFileChange}
             ref={fileInputRef}
             className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2
-                     file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0
-                     file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700
-                     hover:file:bg-blue-100"
+                       file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0
+                       file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700
+                       hover:file:bg-blue-100"
           />
-
-          <select
-            value={imageState.category}
-            onChange={handleCategoryChange}
-            className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2"
-          >
-            <option value="general">General</option>
-            <option value="tamil">Tamil</option>
-            <option value="english">English</option>
-            <option value="event">Event</option>
-          </select>
-
-          <input
-            type="text"
-            value={imageState.description}
-            onChange={handleDescriptionChange}
-            placeholder="Image description (optional)"
-            maxLength={500}
-            className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2"
-          />
-
           <motion.button
             onClick={handleImageUpload}
             disabled={imageState.loading}
@@ -530,15 +497,12 @@ const EventImageUpload = () => {
           >
             {imageState.loading ? 'Uploading...' : 'Upload Event Image'}
           </motion.button>
-
           {imageState.message && (
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className={`text-center ${
-                imageState.message.includes('❌')
-                  ? 'text-red-500'
-                  : 'text-green-400'
+                imageState.message.includes('❌') ? 'text-red-500' : 'text-green-400'
               }`}
             >
               {imageState.message}
@@ -549,6 +513,7 @@ const EventImageUpload = () => {
     </div>
   );
 };
+
 
 
 
