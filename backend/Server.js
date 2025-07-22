@@ -4,14 +4,9 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 require('dotenv').config();
-const dataRouter = require('./router/router'); // Fixed router import
+const dataRouter = require('./router/router');
 
-app.use(bodyParser.json());
-
-// CORS configuration
-
-// Update the allowedOrigins array and CORS configuration
-
+// CORS Configuration
 const allowedOrigins = [
     'https://church-grace.vercel.app',
     'https://church-data-56lv.vercel.app',
@@ -25,18 +20,15 @@ const allowedOrigins = [
     'http://localhost:2000'
 ];
 
-// Update CORS configuration
 app.use(cors({
     origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     credentials: true,
-    maxAge: 86400,
-    preflightContinue: false,
     optionsSuccessStatus: 204
 }));
 
-// Add headers middleware
+// Advanced CORS headers
 app.use((req, res, next) => {
     const origin = req.headers.origin;
     if (allowedOrigins.includes(origin)) {
@@ -48,18 +40,19 @@ app.use((req, res, next) => {
     next();
 });
 
-// Remove this line since we have CORS configured above
-// app.options('*', cors());
+// Body parser
+app.use(bodyParser.json());
 
-// MongoDB Connection
+// MongoDB connection
 mongoose.connect(process.env.MONGODB_URL)
     .then(() => console.log("✅ MongoDB Connected successfully"))
     .catch(err => console.error("❌ MongoDB Connection Error:", err));
 
-// Use the router correctly
+// API Routes
 app.use('/upload/data', dataRouter);
 
-// Start Server
-app.listen(2000, () => {
-    console.log("🚀 Server running on port 2000");
+// Start server
+const PORT = process.env.PORT || 2000;
+app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
 });

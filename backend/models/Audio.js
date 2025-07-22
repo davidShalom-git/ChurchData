@@ -1,6 +1,6 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const videoSchema = new mongoose.Schema({
+const audioSchema = new mongoose.Schema({
     title: {
         type: String,
         required: true,
@@ -10,14 +10,19 @@ const videoSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    type: {
-        type: String,
-        enum: ['video', 'audio'],
-        default: 'video'
-    },
     duration: {
         type: Number, // in seconds
         required: false
+    },
+    artist: {
+        type: String,
+        required: false,
+        trim: true
+    },
+    album: {
+        type: String,
+        required: false,
+        trim: true
     },
     uploadDate: {
         type: Date,
@@ -27,4 +32,4 @@ const videoSchema = new mongoose.Schema({
     timestamps: true
 });
 
-module.exports = mongoose.model('Video', videoSchema);
+module.exports = mongoose.model('Audio', audioSchema);
