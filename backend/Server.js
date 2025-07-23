@@ -7,7 +7,7 @@ require('dotenv').config();
 
 const dataRouter = require('./router/router');
 
-// ✅ Allowed frontend origins
+// 🌐 Allowed frontend origins
 const allowedOrigins = [
   'https://church-grace.vercel.app',
   'https://church-data.vercel.app',
@@ -19,39 +19,20 @@ const allowedOrigins = [
   'https://church-76ju.vercel.app'
 ];
 
-// ✅ FIXED: Updated regex to match Vercel preview deployments correctly
-// This will match:
-// - https://church-data.vercel.app (production)
-// - https://church-data-git-branch.vercel.app (git branch deployments)
-// - https://church-data-56lv.vercel.app (preview deployments)
-// - https://church-data-abc123.vercel.app (any hash-based deployment)
-const subdomainRegex = /^https:\/\/church-data(-[a-zA-Z0-9-]+)?\.vercel\.app$/;
+// 🔍 Regex for Vercel preview deployments
+const vercelRegex = /^https:\/\/church-data(-[a-zA-Z0-9-]+)?\.vercel\.app$/;
 
+// 🔐 CORS Middleware
 app.use(cors({
   origin: function (origin, callback) {
-    console.log('🔍 Request origin:', origin);
-    
-    // Allow requests with no origin (mobile apps, Postman, etc.)
-    if (!origin) {
-      console.log('✅ No origin - allowing request');
-      return callback(null, true);
-    }
-    
-    // Check if origin is in allowed list
-    if (allowedOrigins.includes(origin)) {
-      console.log('✅ Origin in allowed list:', origin);
-      return callback(null, true);
-    }
-    
-    // Check if origin matches Vercel subdomain pattern
-    if (subdomainRegex.test(origin)) {
-      console.log('✅ Origin matches subdomain pattern:', origin);
-      return callback(null, true);
-    }
-    
-    // Origin not allowed
-    console.log('❌ Origin not allowed:', origin);
-    callback(new Error('❌ Not allowed by CORS'));
+    console.log(`🔍 Origin: ${origin || 'No Origin'}`);
+
+    if (!origin) return callback(null, true); // Postman, mobile apps
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    if (vercelRegex.test(origin)) return callback(null, true);
+
+    console.log('❌ CORS Rejected:', origin);
+    callback(new Error('Not allowed by CORS'));
   },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
@@ -59,19 +40,14 @@ app.use(cors({
   optionsSuccessStatus: 200
 }));
 
-// ✅ Handle preflight requests explicitly
+// 🧼 Preflight Handling
 app.options('*', cors());
 
-// ✅ IMPORTANT: Increase body size limit for base64 audio files
-app.use(bodyParser.json({ 
-  limit: '50mb' // Increase limit for base64 audio files
-}));
-app.use(bodyParser.urlencoded({ 
-  limit: '50mb', 
-  extended: true 
-}));
+// 📦 Body Parser (supports large base64 uploads)
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
-// ✅ Add detailed request logging middleware
+// 📋 Request Logger
 app.use((req, res, next) => {
   console.log(`📝 ${req.method} ${req.path}`);
   console.log(`🌐 Origin: ${req.get('Origin')}`);
@@ -79,53 +55,52 @@ app.use((req, res, next) => {
   next();
 });
 
-// ✅ MongoDB Connection
+// 🛠 MongoDB Connection
 mongoose.connect(process.env.MONGODB_URL)
-  .then(() => console.log("✅ MongoDB Connected successfully"))
-  .catch(err => console.error("❌ MongoDB connection error:", err));
+  .then(() => console.log('✅ MongoDB Connected'))
+  .catch(err => console.error('❌ MongoDB Error:', err));
 
-// ✅ API Routes
+// 🚀 Routes
 app.use('/upload/data', dataRouter);
 
-// ✅ Health check endpoint
+// 💚 Health Endpoint
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'OK',
     timestamp: new Date().toISOString(),
-    message: 'Server is running with Base64 audio support'
+    message: 'Server is live with Base64 audio support'
   });
 });
 
-// ✅ CORS test endpoint
+// 🌐 CORS Test
 app.get('/cors-test', (req, res) => {
   res.json({
-    message: 'CORS is working!',
+    message: '✅ CORS Check Passed',
     origin: req.get('Origin'),
     timestamp: new Date().toISOString()
   });
 });
 
-// ✅ Error handling middleware
+// 🧯 Error Handler
 app.use((error, req, res, next) => {
   console.error('💥 Server Error:', error);
-  
+
   if (error.type === 'entity.too.large') {
-    return res.status(413).json({ 
-      message: '❌ File too large. Maximum size is 50MB' 
+    return res.status(413).json({
+      message: '❌ Upload exceeds 50MB limit'
     });
   }
-  
-  res.status(500).json({ 
+
+  res.status(500).json({
     message: '🔥 Internal Server Error',
     error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
   });
 });
 
-// ✅ Start the server
+// ⏯️ Start Server
 const PORT = process.env.PORT || 2000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📁 Base64 audio support enabled`);
-  console.log(`📏 Max body size: 50MB`);
-  console.log(`🌐 CORS configured for Vercel deployments`);
+  console.log(`📁 Base64 support enabled`);
+  console.log(`🌐 CORS whitelist ready`);
 });
