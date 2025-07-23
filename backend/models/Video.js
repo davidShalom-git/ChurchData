@@ -19,6 +19,21 @@ const videoSchema = new mongoose.Schema({
         type: Number, // in seconds
         required: false
     },
+    // NEW: Additional fields for base64 support
+    mimeType: {
+        type: String,
+        required: false,
+        default: 'audio/mpeg'
+    },
+    fileSize: {
+        type: Number, // in bytes
+        required: false
+    },
+    storageType: {
+        type: String,
+        enum: ['url', 'base64'],
+        default: 'url'
+    },
     uploadDate: {
         type: Date,
         default: Date.now
@@ -26,5 +41,9 @@ const videoSchema = new mongoose.Schema({
 }, {
     timestamps: true
 });
+
+// Index for better performance
+videoSchema.index({ type: 1, uploadDate: -1 });
+videoSchema.index({ storageType: 1 });
 
 module.exports = mongoose.model('Video', videoSchema);

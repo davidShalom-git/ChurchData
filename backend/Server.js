@@ -24,27 +24,39 @@ const allowedOrigins = [
 // ✅ CORS middleware (dynamic origin handler)
 app.use(cors({
   origin: function (origin, callback) {
+    console.log('🔍 Request origin:', origin); // Debug logging
+    
     // if no origin, allow (Postman/curl)
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.log('❌ Origin not allowed:', origin);
       callback(new Error('❌ Not allowed by CORS'));
     }
   },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   credentials: true,
-  optionsSuccessStatus: 204
+  optionsSuccessStatus: 200
 }));
 
-// ✅ Express will handle preflight OPTIONS automatically, but to be safe:
+// ✅ Express will handle preflight OPTIONS automatically
 app.options('*', cors());
 
-// ✅ Parse JSON request bodies
-app.use(bodyParser.json());
+// ✅ IMPORTANT: Increase body size limit for base64 audio files
+app.use(bodyParser.json({ 
+  limit: '50mb' // Increase limit for base64 audio files
+}));
+app.use(bodyParser.urlencoded({ 
+  limit: '50mb', 
+  extended: true 
+}));
 
-// ✅ Optional: Serve static /uploaded files if needed
-// app.use('/uploads', express.static('uploads'));
+// ✅ Add request logging middleware
+app.use((req, res, next) => {
+  console.log(`📝 ${req.method} ${req.path} from origin: ${req.get('Origin')}`);
+  next();
+});
 
 // ✅ MongoDB Connection
 mongoose.connect(process.env.MONGODB_URL)
@@ -54,8 +66,37 @@ mongoose.connect(process.env.MONGODB_URL)
 // ✅ API Routes
 app.use('/upload/data', dataRouter);
 
+// ✅ Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    message: 'Server is running with Base64 audio support'
+  });
+});
+
+// ✅ Error handling middleware
+app.use((error, req, res, next) => {
+  console.error('💥 Server Error:', error);
+  
+  if (error.type === 'entity.too.large') {
+    return res.status(413).json({ 
+      message: '❌ File too large. Maximum size is 50MB' 
+    });
+  }
+  
+  res.status(500).json({ 
+    message: '🔥 Internal Server Error',
+    error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+  });
+});
+
 // ✅ Start the server
 const PORT = process.env.PORT || 2000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📁 Base64 audio support enabled`);
+  console.log(`📏 Max body size: 50MB`);
 });
+
+module.exports = app;
