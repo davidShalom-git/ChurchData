@@ -19,23 +19,39 @@ const allowedOrigins = [
   'https://church-76ju.vercel.app'
 ];
 
-// Regex to allow any subdomain under church-data.vercel.app
-const subdomainRegex = /^https:\/\/church-data(-[a-zA-Z0-9]+)?\.vercel\.app$/;
+// ✅ FIXED: Updated regex to match Vercel preview deployments correctly
+// This will match:
+// - https://church-data.vercel.app (production)
+// - https://church-data-git-branch.vercel.app (git branch deployments)
+// - https://church-data-56lv.vercel.app (preview deployments)
+// - https://church-data-abc123.vercel.app (any hash-based deployment)
+const subdomainRegex = /^https:\/\/church-data(-[a-zA-Z0-9-]+)?\.vercel\.app$/;
 
 app.use(cors({
   origin: function (origin, callback) {
     console.log('🔍 Request origin:', origin);
     
-    if (
-      !origin || 
-      allowedOrigins.includes(origin) || 
-      subdomainRegex.test(origin)
-    ) {
-      callback(null, true);
-    } else {
-      console.log('❌ Origin not allowed:', origin);
-      callback(new Error('❌ Not allowed by CORS'));
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) {
+      console.log('✅ No origin - allowing request');
+      return callback(null, true);
     }
+    
+    // Check if origin is in allowed list
+    if (allowedOrigins.includes(origin)) {
+      console.log('✅ Origin in allowed list:', origin);
+      return callback(null, true);
+    }
+    
+    // Check if origin matches Vercel subdomain pattern
+    if (subdomainRegex.test(origin)) {
+      console.log('✅ Origin matches subdomain pattern:', origin);
+      return callback(null, true);
+    }
+    
+    // Origin not allowed
+    console.log('❌ Origin not allowed:', origin);
+    callback(new Error('❌ Not allowed by CORS'));
   },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
@@ -43,6 +59,7 @@ app.use(cors({
   optionsSuccessStatus: 200
 }));
 
+// ✅ Handle preflight requests explicitly
 app.options('*', cors());
 
 // ✅ IMPORTANT: Increase body size limit for base64 audio files
@@ -54,9 +71,11 @@ app.use(bodyParser.urlencoded({
   extended: true 
 }));
 
-// ✅ Add request logging middleware
+// ✅ Add detailed request logging middleware
 app.use((req, res, next) => {
-  console.log(`📝 ${req.method} ${req.path} from origin: ${req.get('Origin')}`);
+  console.log(`📝 ${req.method} ${req.path}`);
+  console.log(`🌐 Origin: ${req.get('Origin')}`);
+  console.log(`📋 Headers: ${JSON.stringify(req.headers)}`);
   next();
 });
 
@@ -74,6 +93,15 @@ app.get('/health', (req, res) => {
     status: 'OK', 
     timestamp: new Date().toISOString(),
     message: 'Server is running with Base64 audio support'
+  });
+});
+
+// ✅ CORS test endpoint
+app.get('/cors-test', (req, res) => {
+  res.json({
+    message: 'CORS is working!',
+    origin: req.get('Origin'),
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -99,6 +127,5 @@ app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📁 Base64 audio support enabled`);
   console.log(`📏 Max body size: 50MB`);
+  console.log(`🌐 CORS configured for Vercel deployments`);
 });
-
-module.exports = app;
