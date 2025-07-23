@@ -8,40 +8,31 @@ require('dotenv').config();
 const dataRouter = require('./router/router');
 
 // 🌐 Allowed frontend origins
-const allowedOrigins = [
-  'https://church-grace.vercel.app',
-  'https://church-data.vercel.app',
-  'https://www.revivalprayerhouse.online',
-  'http://localhost:4000',
-  'http://localhost:1200',
-  'http://localhost:1000',
-  'http://localhost:2000',
-  'https://church-76ju.vercel.app'
-];
-
-// 🔍 Regex for Vercel preview deployments
-const vercelRegex = /^https:\/\/church-data(-[a-zA-Z0-9-]+)?\.vercel\.app$/;
-
-// 🔐 CORS Middleware
-app.use(cors({
-  origin: function (origin, callback) {
-    console.log(`🔍 Origin: ${origin || 'No Origin'}`);
-
-    if (!origin) return callback(null, true); // Postman, mobile apps
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    if (vercelRegex.test(origin)) return callback(null, true);
-
-    console.log('❌ CORS Rejected:', origin);
-    callback(new Error('Not allowed by CORS'));
-  },
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+const corsOptions = {
+  origin: [
+    'https://church-data-56lv.vercel.app', // Your frontend URL
+    'http://localhost:3000', // For local development
+    'http://localhost:5173', // For Vite dev server
+    'https://revivalprayerhouse.online' // Add any other domains you need
+  ],
   credentials: true,
-  optionsSuccessStatus: 200
-}));
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: [
+    'Origin',
+    'X-Requested-With',
+    'Content-Type',
+    'Accept',
+    'Authorization',
+    'Cache-Control',
+    'X-HTTP-Method-Override'
+  ]
+};
 
-// 🧼 Preflight Handling
-app.options('*', cors());
+// Apply CORS middleware
+app.use(cors(corsOptions));
+
+// Handle preflight requests for all routes
+app.options('*', cors(corsOptions));
 
 // 📦 Body Parser (supports large base64 uploads)
 app.use(bodyParser.json({ limit: '50mb' }));
