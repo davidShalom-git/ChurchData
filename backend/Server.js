@@ -10,25 +10,26 @@ const dataRouter = require('./router/router');
 // ✅ Allowed frontend origins
 const allowedOrigins = [
   'https://church-grace.vercel.app',
-  'https://church-data-56lv.vercel.app',
   'https://church-data.vercel.app',
-  'https://church-fire.vercel.app',
-  'https://church-76ju.vercel.app',
   'https://www.revivalprayerhouse.online',
   'http://localhost:4000',
   'http://localhost:1200',
   'http://localhost:1000',
-  'http://localhost:2000',
-  'https://church-data.vercel.app/upload/data/audio'
+  'http://localhost:2000'
 ];
 
-// ✅ CORS middleware (dynamic origin handler)
+// Regex to allow any subdomain under church-data.vercel.app
+const subdomainRegex = /^https:\/\/church-data(-[a-zA-Z0-9]+)?\.vercel\.app$/;
+
 app.use(cors({
   origin: function (origin, callback) {
-    console.log('🔍 Request origin:', origin); // Debug logging
+    console.log('🔍 Request origin:', origin);
     
-    // if no origin, allow (Postman/curl)
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (
+      !origin || 
+      allowedOrigins.includes(origin) || 
+      subdomainRegex.test(origin)
+    ) {
       callback(null, true);
     } else {
       console.log('❌ Origin not allowed:', origin);
@@ -41,7 +42,6 @@ app.use(cors({
   optionsSuccessStatus: 200
 }));
 
-// ✅ Express will handle preflight OPTIONS automatically
 app.options('*', cors());
 
 // ✅ IMPORTANT: Increase body size limit for base64 audio files
