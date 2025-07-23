@@ -19,6 +19,7 @@ const allowedOrigins = [
   'http://localhost:1200',
   'http://localhost:1000',
   'http://localhost:2000',
+  'https://church-data.vercel.app/upload/data/audio'
 ];
 
 // ✅ CORS middleware (dynamic origin handler)
