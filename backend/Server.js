@@ -15,7 +15,8 @@ const allowedOrigins = [
   'http://localhost:4000',
   'http://localhost:1200',
   'http://localhost:1000',
-  'http://localhost:2000'
+  'http://localhost:2000',
+  'https://church-76ju.vercel.app'
 ];
 
 // Regex to allow any subdomain under church-data.vercel.app
