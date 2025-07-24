@@ -244,6 +244,7 @@ const AudioUploadBlock = ({ label, uploadState, setUploadState, lang }) => {
     }
 
     // Validate audio file type
+    const allowedTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/aac', 'audio/flac', 'audio/m4a'];
     if (!file.type.startsWith('audio/')) {
       return setUploadState(prev => ({
         ...prev,
@@ -268,6 +269,7 @@ const AudioUploadBlock = ({ label, uploadState, setUploadState, lang }) => {
       // Convert file to base64
       const base64Data = await convertToBase64(file);
 
+      // CORRECTED ENDPOINT: Using your actual backend URL with the correct audio API path
       const response = await fetch('https://church-76ju.vercel.app/api/audio/upload', {
         method: 'POST',
         headers: {
