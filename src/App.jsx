@@ -1,6 +1,4 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
-import axios from 'axios';
 
 function App() {
   const [formData, setFormData] = useState({ title: '', url: '' });
@@ -17,8 +15,7 @@ function App() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     setLoading(true);
     setMessage(null);
 
@@ -44,22 +41,21 @@ function App() {
     <div className="min-h-screen bg-gray-900 text-white p-6 space-y-8">
       {/* Video Upload Section */}
       <div className="flex items-center justify-center">
-        <div className="bg-gray-800 shadow-xl rounded-xl p-8 w-full max-w-lg">
+        <div className="bg-gray-800 shadow-xl rounded-xl p-8 w-full max-w-lg transition-all duration-300 hover:shadow-2xl">
           <h2 className="text-2xl font-bold mb-6 text-center">🎥 Upload Video</h2>
           {message && (
-            <div className={`text-center p-3 ${message.includes('Error') ? 'text-red-500' : 'text-green-400'}`}>
+            <div className={`text-center p-3 rounded-lg mb-4 transition-all duration-300 ${message.includes('Error') ? 'text-red-500 bg-red-500/10' : 'text-green-400 bg-green-400/10'}`}>
               {message}
             </div>
           )}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-6">
             <input
               type="text"
               name="title"
               value={formData.title}
               onChange={handleChange}
               placeholder="Enter video title"
-              required
-              className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-3"
+              className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-3 focus:border-blue-500 focus:outline-none transition-colors"
             />
             <input
               type="url"
@@ -67,18 +63,16 @@ function App() {
               value={formData.url}
               onChange={handleChange}
               placeholder="Enter YouTube URL"
-              pattern="^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+"
-              required
-              className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-3"
+              className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-3 focus:border-blue-500 focus:outline-none transition-colors"
             />
             <button
-              type="submit"
-              disabled={loading}
-              className={`w-full px-6 py-3 rounded-lg ${loading ? 'bg-gray-600' : 'bg-blue-500 hover:bg-blue-600'}`}
+              onClick={handleSubmit}
+              disabled={loading || !formData.title || !formData.url}
+              className={`w-full px-6 py-3 rounded-lg transition-all duration-300 ${loading || !formData.title || !formData.url ? 'bg-gray-600 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 hover:scale-105'}`}
             >
               {loading ? 'Uploading...' : 'Upload Video'}
             </button>
-          </form>
+          </div>
         </div>
       </div>
 
@@ -146,23 +140,29 @@ const UploadBlock = ({ label, endpoint, uploadState, setUploadState, type, lang 
     formData.append('image', file);
 
     try {
-      await axios.post(`https://church-76ju.vercel.app/api/church/${endpoint}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          'Accept': 'application/json'
-        },
-        timeout: 30000
+      const response = await fetch(`https://church-76ju.vercel.app/api/church/${endpoint}`, {
+        method: 'POST',
+        body: formData,
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
       setUploadState(prev => ({
         ...prev,
         [lang]: { file: null, loading: false, message: `✅ ${label} uploaded successfully!` }
       }));
+
+      // Clear file input
+      const fileInput = document.querySelector(`input[type="file"][accept="image/*"]`);
+      if (fileInput) fileInput.value = '';
+
     } catch (error) {
       let message = `❌ ${label} upload failed: `;
       if (error.message === 'Network Error') message += 'Network error';
-      else if (error.response?.status === 500) message += 'Server error';
-      else message += error.response?.data?.message || error.message;
+      else if (error.message.includes('500')) message += 'Server error';
+      else message += error.message;
 
       setUploadState(prev => ({
         ...prev,
@@ -174,37 +174,27 @@ const UploadBlock = ({ label, endpoint, uploadState, setUploadState, type, lang 
   const current = uploadState[lang];
 
   return (
-    <motion.div
-      className="bg-gray-800 shadow-xl rounded-xl p-6 space-y-4"
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-    >
+    <div className="bg-gray-800 shadow-xl rounded-xl p-6 space-y-4 transition-all duration-300 hover:shadow-2xl hover:scale-105">
       <h3 className="text-lg font-bold text-center">{label}</h3>
       <input
         type="file"
         accept="image/*"
         onChange={handleFileChange}
-        className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+        className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 focus:border-blue-500 focus:outline-none transition-colors"
       />
-      <motion.button
+      <button
         onClick={handleUpload}
         disabled={current.loading}
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        className={`w-full px-6 py-3 rounded-lg ${current.loading ? 'bg-gray-600' : 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600'}`}
+        className={`w-full px-6 py-3 rounded-lg transition-all duration-300 ${current.loading ? 'bg-gray-600 cursor-not-allowed' : 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 hover:scale-105'}`}
       >
         {current.loading ? 'Uploading...' : `Upload ${label}`}
-      </motion.button>
+      </button>
       {current.message && (
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className={`text-center ${current.message.includes('❌') ? 'text-red-500' : 'text-green-400'}`}
-        >
+        <p className={`text-center transition-all duration-300 ${current.message.includes('❌') ? 'text-red-500' : 'text-green-400'}`}>
           {current.message}
-        </motion.p>
+        </p>
       )}
-    </motion.div>
+    </div>
   );
 };
 
@@ -244,7 +234,6 @@ const AudioUploadBlock = ({ label, uploadState, setUploadState, lang }) => {
     }
 
     // Validate audio file type
-    const allowedTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/aac', 'audio/flac', 'audio/m4a'];
     if (!file.type.startsWith('audio/')) {
       return setUploadState(prev => ({
         ...prev,
@@ -252,11 +241,12 @@ const AudioUploadBlock = ({ label, uploadState, setUploadState, lang }) => {
       }));
     }
 
-    const maxSize = 50 * 1024 * 1024; // 50MB for audio
+    // Updated size limit to match backend (10MB for database storage)
+    const maxSize = 10 * 1024 * 1024; // 10MB for database storage
     if (file.size > maxSize) {
       return setUploadState(prev => ({
         ...prev,
-        [lang]: { ...prev[lang], message: '❌ Audio file must be < 50MB' }
+        [lang]: { ...prev[lang], message: '❌ Audio file must be < 10MB for database storage' }
       }));
     }
 
@@ -269,7 +259,7 @@ const AudioUploadBlock = ({ label, uploadState, setUploadState, lang }) => {
       // Convert file to base64
       const base64Data = await convertToBase64(file);
 
-      // CORRECTED ENDPOINT: Using your actual backend URL with the correct audio API path
+      // Use the correct API endpoint
       const response = await fetch('https://church-76ju.vercel.app/api/audio/upload', {
         method: 'POST',
         headers: {
@@ -290,6 +280,7 @@ const AudioUploadBlock = ({ label, uploadState, setUploadState, lang }) => {
           ...prev,
           [lang]: { file: null, loading: false, message: `✅ ${label} uploaded successfully!` }
         }));
+        
         // Clear file input
         const fileInput = document.querySelector(`input[type="file"][accept="audio/*"]`);
         if (fileInput) fileInput.value = '';
@@ -314,21 +305,20 @@ const AudioUploadBlock = ({ label, uploadState, setUploadState, lang }) => {
   const current = uploadState[lang];
 
   return (
-    <motion.div
-      className="bg-gray-800 shadow-xl rounded-xl p-6 space-y-4"
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-    >
+    <div className="bg-gray-800 shadow-xl rounded-xl p-6 space-y-4 transition-all duration-300 hover:shadow-2xl hover:scale-105">
       <h3 className="text-lg font-bold text-center">{label}</h3>
       
       {/* File Info Display */}
       {current.file && (
-        <div className="bg-gray-700 rounded-lg p-3 text-sm">
+        <div className="bg-gray-700 rounded-lg p-3 text-sm transition-all duration-300">
           <p className="font-medium text-white truncate">{current.file.name}</p>
           <div className="flex justify-between text-gray-400 mt-1">
             <span>{formatFileSize(current.file.size)}</span>
             <span>{current.file.type}</span>
           </div>
+          {current.file.size > 10 * 1024 * 1024 && (
+            <p className="text-red-400 text-xs mt-1">⚠️ File too large (max 10MB)</p>
+          )}
         </div>
       )}
 
@@ -336,15 +326,17 @@ const AudioUploadBlock = ({ label, uploadState, setUploadState, lang }) => {
         type="file"
         accept="audio/*"
         onChange={handleFileChange}
-        className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+        className="w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 focus:border-green-500 focus:outline-none transition-colors"
       />
       
-      <motion.button
+      <button
         onClick={handleUpload}
-        disabled={current.loading}
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        className={`w-full px-6 py-3 rounded-lg ${current.loading ? 'bg-gray-600' : 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600'}`}
+        disabled={current.loading || (current.file && current.file.size > 10 * 1024 * 1024)}
+        className={`w-full px-6 py-3 rounded-lg transition-all duration-300 ${
+          current.loading || (current.file && current.file.size > 10 * 1024 * 1024)
+            ? 'bg-gray-600 cursor-not-allowed' 
+            : 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 hover:scale-105'
+        }`}
       >
         {current.loading ? (
           <div className="flex items-center justify-center space-x-2">
@@ -354,18 +346,14 @@ const AudioUploadBlock = ({ label, uploadState, setUploadState, lang }) => {
         ) : (
           `Upload ${label}`
         )}
-      </motion.button>
+      </button>
       
       {current.message && (
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className={`text-center ${current.message.includes('❌') ? 'text-red-500' : 'text-green-400'}`}
-        >
+        <p className={`text-center transition-all duration-300 ${current.message.includes('❌') ? 'text-red-500' : 'text-green-400'}`}>
           {current.message}
-        </motion.p>
+        </p>
       )}
-    </motion.div>
+    </div>
   );
 };
 
