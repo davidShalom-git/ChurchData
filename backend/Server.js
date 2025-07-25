@@ -13,7 +13,8 @@ const corsOptions = {
     'https://church-data-56lv.vercel.app', // Your frontend URL
     'http://localhost:3000', // For local development
     'http://localhost:5173', // For Vite dev server
-    'https://revivalprayerhouse.online' // Add any other domains you need
+    'https://revivalprayerhouse.online',
+    'https://church-data.vercel.app'// Add any other domains you need
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
