@@ -8,7 +8,9 @@ function App() {
   const [uploadState, setUploadState] = useState({
     tamil: { file: null, loading: false, message: null },
     english: { file: null, loading: false, message: null },
-    audio: { file: null, loading: false, message: null }
+    audio: { file: null, loading: false, message: null },
+    tamilAudio: { file: null, loading: false, message: null },
+    englishAudio: { file: null, loading: false, message: null }
   });
 
   const handleChange = (e) => {
@@ -76,7 +78,7 @@ function App() {
         </div>
       </div>
 
-      {/* Upload Grid: Images and Audio */}
+      {/* Upload Grid: Images */}
       <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
         <UploadBlock
           label="📷 Tamil Image"
@@ -99,6 +101,27 @@ function App() {
           uploadState={uploadState}
           setUploadState={setUploadState}
           lang="audio"
+          endpoint="https://church-76ju.vercel.app/api/audio/upload"
+        />
+      </div>
+
+      {/* New Audio Upload Grid: Tamil and English Audio */}
+      <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        <URLAudioUploadBlock
+          label="🎵 Tamil Audio"
+          uploadState={uploadState}
+          setUploadState={setUploadState}
+          lang="tamilAudio"
+          endpoint="https://church-76ju.vercel.app/api/TamAudio/tamupload"
+          color="orange"
+        />
+        <URLAudioUploadBlock
+          label="🎵 English Audio"
+          uploadState={uploadState}
+          setUploadState={setUploadState}
+          lang="englishAudio"
+          endpoint="https://church-76ju.vercel.app/api/EngAudio/engupload"
+          color="purple"
         />
       </div>
     </div>
@@ -198,7 +221,7 @@ const UploadBlock = ({ label, endpoint, uploadState, setUploadState, type, lang 
   );
 };
 
-const AudioUploadBlock = ({ label, uploadState, setUploadState, lang }) => {
+const AudioUploadBlock = ({ label, uploadState, setUploadState, lang, endpoint }) => {
   const convertToBase64 = (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -260,7 +283,7 @@ const AudioUploadBlock = ({ label, uploadState, setUploadState, lang }) => {
       const base64Data = await convertToBase64(file);
 
       // Use the correct API endpoint
-      const response = await fetch('https://church-76ju.vercel.app/api/audio/upload', {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -336,6 +359,118 @@ const AudioUploadBlock = ({ label, uploadState, setUploadState, lang }) => {
           current.loading || (current.file && current.file.size > 10 * 1024 * 1024)
             ? 'bg-gray-600 cursor-not-allowed' 
             : 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 hover:scale-105'
+        }`}
+      >
+        {current.loading ? (
+          <div className="flex items-center justify-center space-x-2">
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            <span>Uploading...</span>
+          </div>
+        ) : (
+          `Upload ${label}`
+        )}
+      </button>
+      
+      {current.message && (
+        <p className={`text-center transition-all duration-300 ${current.message.includes('❌') ? 'text-red-500' : 'text-green-400'}`}>
+          {current.message}
+        </p>
+      )}
+    </div>
+  );
+};
+
+// New component for URL-based audio uploads (Tamil and English Audio)
+const URLAudioUploadBlock = ({ label, uploadState, setUploadState, lang, endpoint, color }) => {
+  const [url, setUrl] = useState('');
+
+  const getColorClasses = (color) => {
+    const colors = {
+      orange: {
+        input: 'focus:border-orange-500',
+        button: 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600',
+        file: 'file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100'
+      },
+      purple: {
+        input: 'focus:border-purple-500',
+        button: 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600',
+        file: 'file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100'
+      }
+    };
+    return colors[color] || colors.orange;
+  };
+
+  const colorClasses = getColorClasses(color);
+
+  const handleUpload = async () => {
+    if (!url.trim()) {
+      return setUploadState(prev => ({
+        ...prev,
+        [lang]: { ...prev[lang], message: '❌ Please enter an audio URL' }
+      }));
+    }
+
+    setUploadState(prev => ({
+      ...prev,
+      [lang]: { ...prev[lang], loading: true, message: null }
+    }));
+
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url: url.trim() }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setUploadState(prev => ({
+          ...prev,
+          [lang]: { file: null, loading: false, message: `✅ ${label} uploaded successfully!` }
+        }));
+        setUrl(''); // Clear the input
+      } else {
+        setUploadState(prev => ({
+          ...prev,
+          [lang]: { ...prev[lang], loading: false, message: `❌ Upload failed: ${result.message || 'Unknown error'}` }
+        }));
+      }
+    } catch (error) {
+      let message = `❌ ${label} upload failed: `;
+      if (error.message === 'Network Error') message += 'Network error';
+      else message += error.message;
+
+      setUploadState(prev => ({
+        ...prev,
+        [lang]: { ...prev[lang], loading: false, message }
+      }));
+    }
+  };
+
+  const current = uploadState[lang];
+
+  return (
+    <div className="bg-gray-800 shadow-xl rounded-xl p-6 space-y-4 transition-all duration-300 hover:shadow-2xl hover:scale-105">
+      <h3 className="text-lg font-bold text-center">{label}</h3>
+      
+      <input
+        type="url"
+        value={url}
+        onChange={(e) => setUrl(e.target.value)}
+        placeholder="Enter audio URL (e.g., YouTube, SoundCloud, etc.)"
+        className={`w-full bg-gray-700 text-white border border-gray-600 rounded-lg p-3 ${colorClasses.input} focus:outline-none transition-colors`}
+      />
+      
+      <button
+        onClick={handleUpload}
+        disabled={current.loading || !url.trim()}
+        className={`w-full px-6 py-3 rounded-lg transition-all duration-300 ${
+          current.loading || !url.trim()
+            ? 'bg-gray-600 cursor-not-allowed' 
+            : `${colorClasses.button} hover:scale-105`
         }`}
       >
         {current.loading ? (
